@@ -1,6 +1,8 @@
 from flask import Flask,render_template,redirect,url_for,jsonify,request,flash
 from models import db, Student
 import os
+import sys
+from urllib.parse import urlparse
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
@@ -13,9 +15,51 @@ os.makedirs(_instance_dir, exist_ok=True)
 _sqlite_abs = os.path.abspath(os.path.join(_instance_dir, 'student.db')).replace('\\', '/')
 _default_db = 'sqlite:///' + _sqlite_abs
 
-_database_url = os.environ.get('DATABASE_URL') or os.environ.get('SQLALCHEMY_DATABASE_URI') or _default_db
-if _database_url.startswith('postgres://'):
-    _database_url = _database_url.replace('postgres://', 'postgresql://', 1)
+
+def _postgres_points_at_localhost(url: str) -> bool:
+    try:
+        if not (url or '').lower().startswith('postgresql'):
+            return False
+        host = (urlparse(url).hostname or '').lower()
+        return host in ('localhost', '127.0.0.1')
+    except Exception:
+        return False
+
+
+def _running_on_pythonanywhere() -> bool:
+    return bool(
+        os.environ.get('PYTHONANYWHERE_DOMAIN')
+        or os.environ.get('PYTHONANYWHERE_SITE')
+        or 'pythonanywhere' in (os.environ.get('SERVER_SOFTWARE') or '').lower()
+    )
+
+
+# Force SQLite (set USE_SQLITE=1 in WSGI before import if DATABASE_URL is stuck on localhost Postgres).
+if os.environ.get('USE_SQLITE', '').strip().lower() in ('1', 'true', 'yes'):
+    _database_url = _default_db
+else:
+    _database_url = os.environ.get('DATABASE_URL') or os.environ.get('SQLALCHEMY_DATABASE_URI') or _default_db
+    if _database_url.startswith('postgres://'):
+        _database_url = _database_url.replace('postgres://', 'postgresql://', 1)
+
+    _legacy_postgres_local = 'postgresql://postgres:123456@localhost:5432/student_registration'
+    if _database_url.strip().lower() == _legacy_postgres_local.lower():
+        print(
+            'Student_management: Legacy DATABASE_URL pointed at PostgreSQL on localhost; '
+            'using SQLite instead:',
+            _default_db,
+            file=sys.stderr,
+        )
+        _database_url = _default_db
+    elif _running_on_pythonanywhere() and _postgres_points_at_localhost(_database_url):
+        print(
+            'Student_management: On PythonAnywhere, PostgreSQL on localhost is not available. '
+            'Unset DATABASE_URL / SQLALCHEMY_DATABASE_URI or set USE_SQLITE=1. Using SQLite:',
+            _default_db,
+            file=sys.stderr,
+        )
+        _database_url = _default_db
+
 app.config['SQLALCHEMY_DATABASE_URI'] = _database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)

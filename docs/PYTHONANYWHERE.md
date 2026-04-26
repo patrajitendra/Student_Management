@@ -4,6 +4,19 @@ PythonAnywhere runs your app with **WSGI**, not `python app.py`.
 
 By default this project uses **SQLite** (`instance/student.db`). You do **not** need PostgreSQL on `localhost` or a MySQL database unless you choose to set `DATABASE_URL`.
 
+### If you still see `psycopg2` / `localhost` / port `5432` errors
+
+Something in your PythonAnywhere environment is still setting **`DATABASE_URL`** or **`SQLALCHEMY_DATABASE_URI`** to PostgreSQL on `localhost` (often from `.bashrc`, a `.env` file loaded in WSGI, or an old WSGI snippet).
+
+**Quick fix:** at the **top** of your **`wsgi.py`** (this repo’s file under the project), add **before** `from wsgi import application` in the *PA* WSGI file you can instead add there:
+
+```python
+import os
+os.environ["USE_SQLITE"] = "1"
+```
+
+Or uncomment the same line already documented inside the project’s `wsgi.py`, then **Reload** the web app. That forces SQLite and ignores the bad Postgres URL.
+
 ---
 
 ## 1. Upload your code
