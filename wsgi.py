@@ -11,7 +11,7 @@ _project_dir = os.path.dirname(os.path.abspath(__file__))
 if _project_dir not in sys.path:
     sys.path.insert(0, _project_dir)
 
-# Set DATABASE_URL / SECRET_KEY here if you prefer not to use the PA env UI:
+# Optional: override defaults (app uses SQLite in instance/ if DATABASE_URL unset).
 # os.environ.setdefault("DATABASE_URL", "mysql+pymysql://user:pass@host/dbname")
 # os.environ.setdefault("SECRET_KEY", "long-random-string")
 

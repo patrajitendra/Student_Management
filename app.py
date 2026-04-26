@@ -4,8 +4,15 @@ import os
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-# Prefer env so Linux/server hosts differ from Windows; Heroku uses postgres://
-_default_db = 'postgresql://postgres:123456@localhost:5432/student_registration'
+_app_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Default: SQLite in instance/ (no Postgres/MySQL required — works on PythonAnywhere out of the box).
+# Override with DATABASE_URL or SQLALCHEMY_DATABASE_URI for PostgreSQL or MySQL.
+_instance_dir = os.path.join(_app_dir, 'instance')
+os.makedirs(_instance_dir, exist_ok=True)
+_sqlite_abs = os.path.abspath(os.path.join(_instance_dir, 'student.db')).replace('\\', '/')
+_default_db = 'sqlite:///' + _sqlite_abs
+
 _database_url = os.environ.get('DATABASE_URL') or os.environ.get('SQLALCHEMY_DATABASE_URI') or _default_db
 if _database_url.startswith('postgres://'):
     _database_url = _database_url.replace('postgres://', 'postgresql://', 1)
@@ -18,7 +25,6 @@ def init_db():
     print("Database created!")
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'mysecretkey123')
 # Absolute path so uploads work when cwd is not the project dir (e.g. PythonAnywhere WSGI)
-_app_dir = os.path.dirname(os.path.abspath(__file__))
 app.config['UPLOAD_FOLDER'] = os.path.join(_app_dir, 'static', 'uploads')
 
 @app.route('/')
