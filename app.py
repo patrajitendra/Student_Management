@@ -4,16 +4,22 @@ import os
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:123456@localhost:5432/student_registration'
+# Prefer env so Linux/server hosts differ from Windows; Heroku uses postgres://
+_default_db = 'postgresql://postgres:123456@localhost:5432/student_registration'
+_database_url = os.environ.get('DATABASE_URL') or os.environ.get('SQLALCHEMY_DATABASE_URI') or _default_db
+if _database_url.startswith('postgres://'):
+    _database_url = _database_url.replace('postgres://', 'postgresql://', 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = _database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 @app.cli.command("init-db")
 def init_db():
     db.create_all()
     print("Database created!")
-app.config['SECRET_KEY'] = 'mysecretkey123'
-UPLOAD_FOLDER = 'static/uploads'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'mysecretkey123')
+# Absolute path so uploads work when cwd is not the project dir (e.g. PythonAnywhere WSGI)
+_app_dir = os.path.dirname(os.path.abspath(__file__))
+app.config['UPLOAD_FOLDER'] = os.path.join(_app_dir, 'static', 'uploads')
 
 @app.route('/')
 
