@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Student</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #f4f6f9;
+        }
+
+        .container {
+            width: 40%;
+            margin: 40px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 2px 10px rgba(0,0,0,0.1);
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        img {
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>Edit Student</h2>
+
+    <form action="/edit/{{ student.id }}" method="post" enctype="multipart/form-data">
+
+        <input type="text" name="name" value="{{ student.name }}" required>
+        <input type="email" name="email" value="{{ student.email }}" required>
+        <input type="text" name="roll_number" value="{{ student.roll_number }}" required>
+        <input type="text" name="semester" value="{{ student.semester }}" required>
+        <input type="text" name="batch" value="{{ student.batch }}" required>
+        <input type="text" name="mobile_number" value="{{ student.mobile_number }}" required>
+
+        <label>Current Photo:</label><br>
+
+        {% if student.photo %}
+            {% set p = (student.photo | replace('\\', '/')) %}
+            {% if p.startswith('static/uploads/') %}
+                {% set photo_name = p[15:] %}
+            {% else %}
+                {% set photo_name = p.rsplit('/', 1) | last %}
+            {% endif %}
+            <img src="{{ url_for('static', filename='uploads/' ~ photo_name) }}" width="120" alt="Current photo">
+        {% else %}
+            <p>No Image</p>
+        {% endif %}
+
+        <br><br>
+
+        <label>Upload New Photo:</label>
+        <input type="file" name="photo" accept="image/*">
+
+        <br><br>
+
+        <button type="submit">Update Student</button>
+
+    </form>
+</div>
+
+</body>
+</html>

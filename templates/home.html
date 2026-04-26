@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+        }
+
+        nav {
+            background: #2c3e50;
+            padding: 10px;
+        }
+
+        nav a {
+            color: white;
+            margin-right: 15px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            width: 80%;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 2px 8px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table th, table td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            text-align: center;
+        }
+
+        table th {
+            background: #3498db;
+            color: white;
+        }
+
+        img {
+            border-radius: 5px;
+        }
+
+        .btn {
+            padding: 6px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            color: white;
+        }
+
+        .edit {
+            background: #27ae60;
+        }
+
+        .delete {
+            background: #e74c3c;
+        }
+
+        .flash {
+            color: green;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <p class="flash">
+      {% for message in messages %}
+        {{ message }}
+      {% endfor %}
+    </p>
+  {% endif %}
+{% endwith %}
+
+<!-- Navbar -->
+<nav>
+    <a href="/">Home</a>
+    <a href="/register">Register</a>
+    <a href="/login">Login</a>
+    <a href="/about">About</a>  
+</nav>
+{% if students | length == 0 %}
+    <div class="container">
+        <h2>No students found.</h2>
+        <p>Please <a href="/register">add</a> some students to see them listed here.</p>
+    </div>
+{% else %}
+    <div class="container">
+    <h1>Student List</h1>
+
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Photo</th>
+            <th>Actions</th>
+        </tr>
+
+        {% for student in students %}
+        <tr>
+            <td>{{ student.id }}</td>
+            <td>{{ student.name }}</td>
+            <td>{{ student.email }}</td>
+
+            <!-- Show Image -->
+            <td>
+                {% if student.photo %}
+                    {% set p = (student.photo | replace('\\', '/')) %}
+                    {% if p.startswith('static/uploads/') %}
+                        {% set photo_name = p[15:] %}
+                    {% else %}
+                        {% set photo_name = p.rsplit('/', 1) | last %}
+                    {% endif %}
+                    <img src="{{ url_for('static', filename='uploads/' ~ photo_name) }}" width="60" alt="Photo">
+                {% else %}
+                    No Image
+                {% endif %}
+            </td>
+
+            <td>
+                <a href="/edit/{{ student.id }}" class="btn edit">Edit</a>
+                <a href="/delete/{{ student.id }}" 
+                   class="btn delete"
+                   onclick="return confirm('Are you sure?')">
+                   Delete
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+</div>
+{% endif %}
+
+</body>
+</html>
